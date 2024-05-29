@@ -1,5 +1,7 @@
 # To-Do List App
 
+Live: [here](https://gp-to-do-app.netlify.app)
+
 A user-friendly and efficient To-Do List application to help you manage your tasks effortlessly. This app allows you to add, edit, delete, and mark tasks as completed. It also features persistent data storage so your tasks are saved even when you close the browser.
 
 ## Features
@@ -58,8 +60,8 @@ You need a modern web browser to run this application.
 
 ## Screenshots
 
-![Main Interface](screenshots/main-interface.png)
-![Task Completed](screenshots/task-completed.png)
+![Dark Mode](screenshots/dark-mode.jpeg)
+![Light Mode](screenshots/light-mode.jpeg)
 
 ## Live Demo
 
