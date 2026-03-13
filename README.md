@@ -1,87 +1,91 @@
-# To-Do List App
+# To-Doit ⚡️
 
-Live: [here](https://gp-to-do-app.netlify.app)
+A high-performance, aesthetically bold task management application built with **Expo** and **React Native**. Featuring a striking **Neo-Brutalist** design language, To-Doit combines raw aesthetics with smooth user experience.
 
-A user-friendly and efficient To-Do List application to help you manage your tasks effortlessly. This app allows you to add, edit, delete, and mark tasks as completed. It also features persistent data storage so your tasks are saved even when you close the browser.
+## ✨ Features
 
-## Features
+- **🎯 Precise Task Management**: Create, edit, and organize tasks with high-contrast priority levels.
+- **🏗️ Neo-Brutalist UI**: A custom design system built with bold shadows, hard edges, and vibrant accents.
+- **🗓️ Dynamic Scheduling**: Navigate your week with a functional week strip and a comprehensive calendar view.
+- **🏷️ Category Management**: Organize your workflow with custom categories and a multi-layered category management system.
+- **🔍 Advanced Search**: Find any task instantly with real-time filtering and status tracking.
+- **🌓 Dark Mode**: Full support for both vibrant light and sleek dark themes.
+- **⚡️ Smooth Interactions**: Powered by React Native Reanimated for high-frame-rate transitions and haptic-aligned feedback.
+- **💾 Local Storage**: All data is stored locally on your device using AsyncStorage — no account or internet required.
 
-- **Add Tasks**: Quickly add new tasks to your to-do list.
-- **Edit Tasks**: Easily edit existing tasks.
-- **Delete Tasks**: Remove tasks that are no longer needed.
-- **Mark as Completed**: Mark tasks as completed to keep track of your progress.
-- **Persistent Storage**: Your tasks are saved in local storage, so they persist across browser sessions.
-- **Responsive Design**: Works seamlessly on both desktop and mobile devices.
+## 🛠 Tech Stack
 
-## Technologies Used
+- **Framework**: [Expo](https://expo.dev/) (SDK 55+) / React Native
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Navigation**: [Expo Router](https://docs.expo.dev/router/introduction/) (File-based routing)
+- **Animation**: [React Native Reanimated](https://docs.swmansion.com/react-native-reanimated/)
+- **Styling**: Vanilla StyleSheet with a custom Neo-Brutalist design system.
+- **Icons**: [Ionicons](https://ionic.io/ionicons) & [Lucide](https://lucide.dev/)
+- **Date Handling**: [date-fns](https://date-fns.org/)
+- **Persistence**: [AsyncStorage](https://react-native-async-storage.github.io/async-storage/) (Local on-device storage)
 
-- **HTML**: For structuring the content on the web.
-- **CSS**: For styling the application.
-  - Flexbox: For layout structure.
-  - Media Queries: For responsive design.
-- **JavaScript**: For application logic and interactivity.
-  - Local Storage: For saving tasks locally on the user's device.
-
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 
-You need a modern web browser to run this application.
+- [Node.js](https://nodejs.org/) (LTS)
+- npm or yarn
+- Expo Go app on your mobile device or an emulator
 
 ### Installation
 
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/gabriel-pipia/To-Do-list-app.git
-    ```
+1. **Clone the repository**
 
-2. Navigate to the project directory:
-    ```bash
-    cd To-Do-list-app
-    ```
+   ```bash
+   git clone https://github.com/your-username/to-doit.git
+   cd to-doit
+   ```
 
-3. Open `index.html` in your favorite web browser.
+2. **Install dependencies**
 
-## Usage
+   ```bash
+   npm install
+   ```
 
-1. Open the application.
-2. Use the input field to add a new task and press enter or click the add button.
-3. Click on a task to mark it as completed.
-4. Click the edit button next to a task to modify it.
-5. Click the delete button next to a task to remove it.
-6. Your tasks will be saved automatically in local storage.
+3. **Start the application**
 
-## Project Structure
+   ```bash
+   npm start
+   ```
 
-- `index.html`: Main HTML file.
-- `styles.css`: CSS file for styling the application.
-- `script.js`: JavaScript file for handling application logic.
-- `README.md`: Project documentation.
+   Scan the QR code with your Expo Go app (Android) or Camera (iOS).
 
-## Screenshots
+## 📂 Project Structure
 
-![Dark Mode](screenshots/dark-mode.jpeg)
-![Light Mode](screenshots/light-mode.jpeg)
+```text
+├── app/                  # Expo Router pages
+│   ├── (auth)/           # Authentication screens
+│   ├── (tabs)/           # Main application tab screens
+│   └── index.tsx         # Entry point / Auth guard
+├── src/
+│   ├── components/       # Reusable UI components
+│   │   └── ui/           # Core Atomic UI kit (Button, Input, etc.)
+│   ├── context/          # State management (Auth, Theme)
+│   ├── hooks/            # Custom React hooks (useTasks, useCategories)
+│   ├── lib/              # Constants and configurations
+│   ├── types/            # TypeScript definitions
+│   └── utils/            # Helper functions
+└── assets/               # Fonts and images
+```
 
-## Live Demo
+## 🎨 Design Philosophy
 
-Check out the live demo of the application: [To-Do List App](https://gp-to-do-app.netlify.app)
+To-Doit embraces **Neo-Brutalism**. This means:
 
-## License
+- **Thick Borders**: 3px solid borders on interactive elements.
+- **Hard Shadows**: Unblurred black shadows for a blocky, physical feel.
+- **Bold Typography**: Using "Kodchasan" for a unique, modern look.
+- **High Contrast**: Using a palette that emphasizes visibility and action.
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+## 📄 License
 
-## Acknowledgements
-
-- [Font Awesome](https://fontawesome.com/) for icons
-
-## Author
-
-Gabriel Pipia
-- [GitHub](https://github.com/gabriel-pipia)
-
-Feel free to contribute, open issues, or provide feedback!
+This project is private and for personal use.
 
 ---
 
-Thank you for checking out this project!
+Built with ⚡️ by [gabriel pipia](https://github.com/gabriel-pipia)
