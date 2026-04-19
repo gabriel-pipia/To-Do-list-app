@@ -16,6 +16,7 @@ export function BottomTabNavigation({ state, descriptors, navigation }: BottomTa
     styles.container,
     {
       backgroundColor: colors.background,
+      width: layout.containerWidth as any,
       maxWidth: layout.containerMaxWidth,
       borderRadius: 0, // Blocky tab bar
       ...BRUTAL_STYLES(colors),
