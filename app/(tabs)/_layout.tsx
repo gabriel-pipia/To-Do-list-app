@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React, { useState } from 'react';
 import { AddTaskModal } from '../../src/components/AddTaskModal';
-import { CustomTabBar } from '../../src/components/CustomTabBar';
+import { BottomTabNavigation } from '../../src/components/BottomTabNavigation';
 import { useTheme } from '../../src/context/ThemeContext';
 import { useCategories } from '../../src/hooks/useCategories';
 import { useTasks } from '../../src/hooks/useTasks';
@@ -16,7 +16,7 @@ export default function TabsLayout() {
   return (
     <>
       <Tabs
-        tabBar={props => <CustomTabBar {...props} />}
+        tabBar={props => <BottomTabNavigation {...props} />}
         screenOptions={{
           headerShown: false,
         }}

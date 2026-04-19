@@ -24,9 +24,9 @@ export const COLORS = {
   },
   // Dark theme (Neo-Brutalism)
   dark: {
-    background: '#1A1A1A',
-    surface: '#2C2C2C',
-    surfaceSecondary: '#3D3D3D',
+    background: '#0F0F0F',
+    surface: '#1A1A1A',
+    surfaceSecondary: '#242424',
     textPrimary: '#FFFFFF',
     textSecondary: '#CCCCCC',
     textTertiary: '#999999',
@@ -36,12 +36,12 @@ export const COLORS = {
     black: '#000000',
     primary: '#FFFFFF',
     secondary: '#00FFFF', // Electric Blue
-    border: '#FFFFFF', // Actually we'll keep black borders for some, but let's use white for dark mode contrast
+    border: '#FFFFFF',
     shadow: '#FFFFFF',
-    accent: '#33b31dff', // Bright Yellow
-    accentLight: '#33b31dff',
+    accent: '#39FF14',
+    accentLight: 'rgba(57, 255, 20, 0.2)',
     success: '#39FF14',
-    successLight: '#33b31dff',
+    successLight: 'rgba(57, 255, 20, 0.2)',
     danger: '#FF003C',
     dangerLight: 'rgba(255, 0, 60, 0.2)',
   },

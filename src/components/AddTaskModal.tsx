@@ -46,7 +46,7 @@ export function AddTaskModal({
   selectedDate,
   initialTask,
 }: AddTaskModalProps) {
-  const { colors, spacing } = useTheme();
+  const { colors, spacing, getContrastColor } = useTheme();
   const { categories, refresh: refreshCategories } = useCategories();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -239,29 +239,27 @@ export function AddTaskModal({
           <ThemedText weight="bold" size="md">Category</ThemedText>
         </View>
         <View style={styles.chipRow}>
-          {catNames.slice(0, 3).map((cat) => {
+          {categories.map((cat) => {
             const active = selectedCategory === cat.id;
+            const catColor = cat.color || colors.accent;
+            const contrastTextClr = getContrastColor(catColor);
             return (
               <Button
                 key={cat.id}
                 title={cat.name}
-                variant={active ? 'primary' : 'secondary'}
+                variant="secondary"
                 size="sm"
                 onPress={() => setSelectedCategory(cat.id)}
-                style={{ borderRadius: 0 }}
+                style={{
+                  borderRadius: 0,
+                  backgroundColor: catColor,
+                  borderWidth: active ? 3 : 0,
+                  borderColor: colors.textPrimary,
+                }}
+                textStyle={{ color: contrastTextClr, fontWeight: '800' }}
               />
             );
           })}
-          {selectedCategory && !catNames.slice(0, 3).find(c => c.id === selectedCategory) && (
-             <Button
-                key={selectedCategory}
-                title={catNames.find(c => c.id === selectedCategory)?.name || 'Custom'}
-                variant="primary"
-                size="sm"
-                onPress={() => setSelectedCategory(selectedCategory)}
-                style={{ borderRadius: 0 }}
-             />
-          )}
           <Button
             type="icon"
             variant="secondary"

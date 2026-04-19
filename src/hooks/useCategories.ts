@@ -18,8 +18,20 @@ export function useCategories() {
 
     try {
       const catsStr = await AsyncStorage.getItem(`${CATEGORIES_STORAGE_KEY}_${user.id}`);
-      const cats: Category[] = catsStr ? JSON.parse(catsStr) : [];
+      let cats: Category[] = catsStr ? JSON.parse(catsStr) : [];
       
+      // Auto-seed default categories if empty
+      if (cats.length === 0) {
+        cats = [
+          { id: uuidv4(), user_id: user.id, name: 'Marketing', color: '#FF8A80', icon: 'megaphone', created_at: new Date().toISOString() },
+          { id: uuidv4(), user_id: user.id, name: 'Personal', color: '#82B1FF', icon: 'person', created_at: new Date().toISOString() },
+          { id: uuidv4(), user_id: user.id, name: 'Research', color: '#FFE57F', icon: 'search', created_at: new Date().toISOString() },
+          { id: uuidv4(), user_id: user.id, name: 'Clients', color: '#B388FF', icon: 'people', created_at: new Date().toISOString() },
+          { id: uuidv4(), user_id: user.id, name: 'Analytics', color: '#69F0AE', icon: 'bar-chart', created_at: new Date().toISOString() },
+        ];
+        await AsyncStorage.setItem(`${CATEGORIES_STORAGE_KEY}_${user.id}`, JSON.stringify(cats));
+      }
+
       // Sort by created_at
       cats.sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''));
       setCategories(cats);

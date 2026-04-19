@@ -17,15 +17,13 @@ import {
 } from 'date-fns';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  StyleSheet,
-  View
-} from 'react-native';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import { StyleSheet, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { FadeIn, FadeInLeft, FadeInRight, runOnJS } from 'react-native-reanimated';
 import { AddTaskModal } from '../../src/components/AddTaskModal';
 import { BottomSheet, Button, SheetHeader, ThemedText, ThemedView } from '../../src/components/ui';
 import { useAuth } from '../../src/context/AuthContext';
-import { useTheme } from '../../src/context/ThemeContext';
+import { useTheme } from '../../src/hooks/useTheme';
 import { useCategories } from '../../src/hooks/useCategories';
 import { useTasks } from '../../src/hooks/useTasks';
 import { SPACING } from '../../src/lib/constants';
@@ -37,11 +35,12 @@ const MONTHS = [
 ];
 
 export default function CalendarScreen() {
-  const { colors } = useTheme();
+  const { colors, getContrastColor } = useTheme();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [showYearPicker, setShowYearPicker] = useState(false);
+  const [navDirection, setNavDirection] = useState<'left' | 'right'>('right');
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [allTasks, setAllTasks] = useState<any[]>([]);
 
@@ -78,14 +77,36 @@ export default function CalendarScreen() {
   }
 
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
+  const years = Array.from({ length: 21 }, (_, i) => currentYear + i);
 
   const handleSelectMonth = (monthIndex: number) => {
+    setNavDirection(monthIndex > currentMonth.getMonth() ? 'right' : 'left');
     setCurrentMonth(setMonth(currentMonth, monthIndex));
     setShowMonthPicker(false);
   };
 
+  const goToPrevMonth = () => {
+    setNavDirection('left');
+    setCurrentMonth(subMonths(currentMonth, 1));
+  };
+
+  const goToNextMonth = () => {
+    setNavDirection('right');
+    setCurrentMonth(addMonths(currentMonth, 1));
+  };
+
+  const gesture = Gesture.Pan()
+    .activeOffsetX([-20, 20]) // Avoid accidental swiping when scrolling/tapping
+    .onEnd((e) => {
+      if (e.translationX > 50) {
+        runOnJS(goToPrevMonth)();
+      } else if (e.translationX < -50) {
+        runOnJS(goToNextMonth)();
+      }
+    });
+
   const handleSelectYear = (year: number) => {
+    setNavDirection(year > currentMonth.getFullYear() ? 'right' : 'left');
     setCurrentMonth(setYear(currentMonth, year));
     setShowYearPicker(false);
   };
@@ -100,10 +121,11 @@ export default function CalendarScreen() {
           </ThemedText>
           <Button
             title="TODAY"
-            variant="outline"
+            variant="secondary"
             size="sm"
             onPress={() => {
               const now = new Date();
+              setNavDirection(now > currentMonth ? 'right' : 'left');
               setCurrentMonth(now);
               setSelectedDate(now);
             }}
@@ -118,106 +140,120 @@ export default function CalendarScreen() {
           <Button
             size="sm"
             title={format(currentMonth, 'MMMM').toUpperCase()}
-            variant="outline"
+            variant="secondary"
             rightIcon={<Ionicons name="chevron-down" size={14} color={colors.textPrimary} />}
             onPress={() => setShowMonthPicker(true)}
           />
           <Button
             size="sm"
             title={format(currentMonth, 'yyyy')}
-            variant="outline"
+            variant="secondary"
             rightIcon={<Ionicons name="chevron-down" size={14} color={colors.textPrimary} />}
             onPress={() => setShowYearPicker(true)}
           />
         </View>
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <Button 
-              type="icon" 
-              variant="secondary" 
-              size="sm"
-              icon={<Ionicons name="arrow-back" size={18} color={colors.textPrimary} />}
-              onPress={() => setCurrentMonth(subMonths(currentMonth, 1))} 
-            />
-            <Button 
-              type="icon" 
-              variant="secondary" 
-              size="sm"
-              icon={<Ionicons name="arrow-forward" size={18} color={colors.textPrimary} />}
-              onPress={() => setCurrentMonth(addMonths(currentMonth, 1))} 
-            />
+            type="icon" 
+            variant="secondary" 
+            size="sm"
+            icon={<Ionicons name="arrow-back" size={18} color={colors.textPrimary} />}
+            onPress={goToPrevMonth} 
+          />
+          <Button 
+            type="icon" 
+            variant="secondary" 
+            size="sm"
+            icon={<Ionicons name="arrow-forward" size={18} color={colors.textPrimary} />}
+            onPress={goToNextMonth} 
+          />
         </View>
       </View>
 
-      <View style={styles.calendarContainer}>
-        {/* Grid Day Labels */}
-        <View style={styles.dayNamesRow}>
-          {GRID_LABELS.map((name) => (
-            <ThemedText key={name} size="xs" weight="black" colorType="textTertiary" style={styles.dayNameText}>
-              {name.toUpperCase()}
-            </ThemedText>
-          ))}
-        </View>
+      <GestureDetector gesture={gesture}>
+        <View style={styles.calendarContainer}>
+          {/* Grid Day Labels */}
+          <View style={styles.dayNamesRow}>
+            {GRID_LABELS.map((name) => (
+              <ThemedText key={name} size="xs" weight="black" colorType="textTertiary" style={styles.dayNameText}>
+                {name.toUpperCase()}
+              </ThemedText>
+            ))}
+          </View>
 
-        {/* Calendar Grid */}
-        <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.grid}>
-          {days.map((d, index) => {
-            const isCurrentMonth = isSameMonth(d, currentMonth);
-            const isSelected = isSameDay(d, selectedDate);
-            const today = isToday(d);
-            
-            const dayString = format(d, 'yyyy-MM-dd');
-            const dayTasks = allTasks.filter(t => t.due_date === dayString);
-            const hasTasks = dayTasks.length > 0;
-            const hasUncompletedTasks = dayTasks.some(t => !t.is_completed);
+          {/* Calendar Grid */}
+          <Animated.View 
+            key={monthStart.toISOString()} 
+            entering={navDirection === 'right' ? FadeInRight.duration(400) : FadeInLeft.duration(400)} 
+            style={styles.grid}
+          >
+            {days.map((d, index) => {
+              const isCurrentMonth = isSameMonth(d, currentMonth);
+              const isSelected = isSameDay(d, selectedDate);
+              const today = isToday(d);
+              
+              const dayString = format(d, 'yyyy-MM-dd');
+              const dayTasks = allTasks.filter(t => t.due_date === dayString);
+              const hasTasks = dayTasks.length > 0;
+              const hasUncompletedTasks = dayTasks.some(t => !t.is_completed);
 
-            return (
-              <View key={index} style={styles.gridCellContainer}>
-                <Button
-                  size="none"
-                  onPress={() => {
-                    setSelectedDate(d);
-                    if (hasTasks) {
-                      router.push({ pathname: '/(tabs)/day', params: { date: dayString } });
-                    } else {
-                      setIsAddModalVisible(true);
-                    }
-                  }}
-                  variant={isSelected ? 'primary' : 'outline'}
-                  style={[
-                    styles.dayCell,
-                    !isSelected && today && { borderStyle: 'solid' },
-                    !isSelected && !today && { borderColor: 'transparent', boxShadow: 'none', borderWidth: 0 }
-                  ]}
-                >
-                  <ThemedText
-                    size="md"
-                    weight="black"
-                    style={{
-                      color: isSelected
-                        ? colors.textPrimary
-                        : isCurrentMonth
-                        ? colors.textPrimary
-                        : colors.textTertiary,
+              return (
+                <View key={index} style={styles.gridCellContainer}>
+                  <Button
+                    size="none"
+                    onPress={() => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const cellDate = new Date(d);
+                      cellDate.setHours(0, 0, 0, 0);
+
+                      if (cellDate < today && !hasTasks) return;
+                      
+                      setSelectedDate(d);
+                      if (hasTasks) {
+                        router.push({ pathname: '/(tabs)/day', params: { date: dayString } });
+                      } else {
+                        setIsAddModalVisible(true);
+                      }
                     }}
+                    variant={isSelected ? 'primary' : 'outline'}
+                    style={[
+                      styles.dayCell,
+                      !isSelected && today && { borderStyle: 'solid' },
+                      !isSelected && !today && { borderColor: 'transparent', boxShadow: 'none', borderWidth: 0 }
+                    ]}
                   >
-                    {format(d, 'd')}
-                  </ThemedText>
-                  
-                  {/* Task Indicator Dot */}
-                  {hasTasks && (
-                    <View 
-                      style={[
-                        styles.taskIndicator, 
-                        { backgroundColor: isSelected ? colors.background : (hasUncompletedTasks ? colors.textPrimary : colors.success) }
-                      ]} 
-                    />
-                  )}
-                </Button>
-              </View>
-            );
-          })}
-        </Animated.View>
-      </View>
+                    <ThemedText
+                      size="md"
+                      weight="black"
+                      style={{
+                        color: isSelected
+                          ? getContrastColor(colors.accent)
+                          : (isCurrentMonth && (new Date(d).getTime() >= new Date().setHours(0,0,0,0) || hasTasks))
+                          ? colors.textPrimary
+                          : colors.textTertiary,
+                        opacity: (new Date(d).getTime() < new Date().setHours(0,0,0,0) && !hasTasks) ? 0.3 : 1,
+                      }}
+                    >
+                      {format(d, 'd')}
+                    </ThemedText>
+                    
+                    {/* Task Indicator Dot */}
+                    {hasTasks && (
+                      <View 
+                        style={[
+                          styles.taskIndicator, 
+                          { backgroundColor: isSelected ? colors.background : (hasUncompletedTasks ? colors.textPrimary : colors.success) }
+                        ]} 
+                      />
+                    )}
+                  </Button>
+                </View>
+              );
+            })}
+          </Animated.View>
+        </View>
+      </GestureDetector>
 
       <AddTaskModal
         visible={isAddModalVisible}

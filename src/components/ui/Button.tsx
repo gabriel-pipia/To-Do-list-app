@@ -35,7 +35,7 @@ export function Button({
   rounded = 'full',
   ...props 
 }: ButtonProps) {
-  const { colors, spacing, borderRadius } = useTheme();
+  const { colors, spacing, borderRadius, getContrastColor } = useTheme();
   
   // Size styles (padding)
   const sizePadding = {
@@ -56,7 +56,7 @@ export function Button({
   switch (variant) {
     case 'primary':
       backgroundColor = colors.accent; // Make primary buttons vibrant
-      textColor = colors.textPrimary; 
+      textColor = getContrastColor ? getContrastColor(colors.accent) : colors.textPrimary; 
       break;
     case 'secondary':
       backgroundColor = colors.surface;

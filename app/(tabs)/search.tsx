@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { Search, X } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, View, DeviceEventEmitter } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { BottomSheet, Button, Input, SheetHeader, ThemedText, ThemedView } from '../../src/components/ui';
 import { useAuth } from '../../src/context/AuthContext';
@@ -70,6 +70,10 @@ export default function SearchScreen() {
 
   useEffect(() => {
     fetchAllTasks();
+    const sub = DeviceEventEmitter.addListener('tasks_updated', () => {
+      fetchAllTasks();
+    });
+    return () => sub.remove();
   }, [fetchAllTasks]);
 
   useEffect(() => {

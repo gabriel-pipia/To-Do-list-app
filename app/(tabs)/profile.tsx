@@ -2,11 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import { BottomSheet, Button, Input, SheetHeader, ThemedText, ThemedView } from '../../src/components/ui';
+import { Pressable, ScrollView, StyleSheet, View, DeviceEventEmitter } from 'react-native';
+import Animated, { FadeIn, FadeInDown, LinearTransition, useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
+import { BottomSheet, BrutalSwitch, Button, Input, SheetHeader, ThemedText, ThemedView } from '../../src/components/ui';
 import { useAuth } from '../../src/context/AuthContext';
-import { useTheme } from '../../src/context/ThemeContext';
+import { useTheme, ACCENT_PRESETS, getContrastColor } from '../../src/context/ThemeContext';
 import { useCategories } from '../../src/hooks/useCategories';
 import { BRUTAL_STYLES, SPACING } from '../../src/lib/constants';
 import { ManageCategoriesSheet } from '../../src/components/ManageCategoriesSheet';
@@ -15,7 +15,7 @@ import { toDateString } from '../../src/utils/dateUtils';
 
 export default function ProfileScreen() {
   const { user, profile, signOut, updateProfile } = useAuth();
-  const { colors, mode, toggleTheme } = useTheme();
+  const { colors, mode, toggleTheme, accentColor, setAccentColor } = useTheme();
   const { categories, addCategory, deleteCategory } = useCategories();
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
@@ -26,6 +26,23 @@ export default function ProfileScreen() {
 
   // Categories State
   const [showManageCategories, setShowManageCategories] = useState(false);
+  const [showAccentPicker, setShowAccentPicker] = useState(false);
+  const [measuredHeight, setMeasuredHeight] = useState(0);
+  const pickerHeight = useSharedValue(0);
+  const pickerOpacity = useSharedValue(0);
+
+  const toggleAccentPicker = () => {
+    const opening = !showAccentPicker;
+    setShowAccentPicker(opening);
+    pickerHeight.value = withTiming(opening ? measuredHeight : 0, { duration: 300, easing: Easing.bezier(0.4, 0, 0.2, 1) });
+    pickerOpacity.value = withTiming(opening ? 1 : 0, { duration: opening ? 300 : 150 });
+  };
+
+  const pickerAnimatedStyle = useAnimatedStyle(() => ({
+    height: pickerHeight.value,
+    opacity: pickerOpacity.value,
+    overflow: 'hidden' as const,
+  }));
 
   const fetchAllTasks = useCallback(async () => {
     if (!user) return;
@@ -42,6 +59,10 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     fetchAllTasks();
+    const sub = DeviceEventEmitter.addListener('tasks_updated', () => {
+      fetchAllTasks();
+    });
+    return () => sub.remove();
   }, [fetchAllTasks]);
 
   const handleOpenEditProfile = () => {
@@ -140,7 +161,7 @@ export default function ProfileScreen() {
             <ThemedText size="sm" weight="black" colorType="textTertiary" style={styles.sectionTitle}>
               PREFERENCES
             </ThemedText>
-            <View style={[styles.cardGroup, { borderColor: colors.textPrimary }, BRUTAL_STYLES(colors)]}>
+            <Animated.View layout={LinearTransition.duration(300)} style={[styles.cardGroup, { borderColor: colors.textPrimary }, BRUTAL_STYLES(colors)]}>
               {/* Dark Mode Toggle */}
               <View style={[styles.cardItem, { backgroundColor: colors.surface }]}>
                 <View style={styles.cardItemLeft}>
@@ -149,13 +170,71 @@ export default function ProfileScreen() {
                   </View>
                   <ThemedText size="md" weight="bold">Dark Mode</ThemedText>
                 </View>
-                <Switch 
+                <BrutalSwitch 
                   value={mode === 'dark'} 
                   onValueChange={toggleTheme}
-                  trackColor={{ false: colors.border, true: colors.textPrimary }}
-                  thumbColor={colors.background}
                 />
               </View>
+
+              <View style={[styles.divider, { backgroundColor: colors.textPrimary }]} />
+
+              {/* Accent Color */}
+              <Pressable 
+                style={[styles.cardItem, { backgroundColor: colors.surface }]}
+                onPress={toggleAccentPicker}
+              >
+                <View style={styles.cardItemLeft}>
+                  <View style={[styles.iconBox, { backgroundColor: colors.surface }]}>
+                    <Ionicons name="color-palette-outline" size={20} color={colors.textPrimary} />
+                  </View>
+                  <ThemedText size="md" weight="bold">Accent Color</ThemedText>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <View style={[styles.accentPreview, { backgroundColor: accentColor, borderColor: colors.textPrimary }]} />
+                  <Ionicons 
+                    name={showAccentPicker ? 'chevron-up' : 'chevron-down'} 
+                    size={20} 
+                    color={colors.textTertiary} 
+                  />
+                </View>
+              </Pressable>
+
+              <Animated.View style={[styles.accentPickerContainer, { backgroundColor: colors.surface }, pickerAnimatedStyle]}>
+                <View 
+                  style={styles.accentColorRow}
+                  onLayout={(e) => {
+                    const height = e.nativeEvent.layout.height;
+                    setMeasuredHeight(height);
+                    if (showAccentPicker) {
+                      pickerHeight.value = height;
+                    }
+                  }}
+                >
+                  {ACCENT_PRESETS.map((preset) => {
+                    const isActive = accentColor === preset.color;
+                    const contrastClr = getContrastColor(preset.color);
+                    return (
+                      <Pressable
+                        key={preset.color}
+                        onPress={() => setAccentColor(preset.color)}
+                        style={[
+                          styles.accentSwatch,
+                          { 
+                            backgroundColor: preset.color,
+                            borderColor: isActive ? colors.textPrimary : 'transparent',
+                            borderWidth: isActive ? 3 : 0,
+                          },
+                          isActive && { transform: [{ scale: 1.15 }] },
+                        ]}
+                      >
+                        {isActive && (
+                          <Ionicons name="checkmark" size={16} color={contrastClr} />
+                        )}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </Animated.View>
 
               <View style={[styles.divider, { backgroundColor: colors.textPrimary }]} />
 
@@ -169,7 +248,7 @@ export default function ProfileScreen() {
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
               </Pressable>
-            </View>
+            </Animated.View>
           </Animated.View>
 
           {/* Account Section */}
@@ -356,6 +435,29 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     marginBottom: 12,
   },
+  accentPickerContainer: {
+    // No padding here — the height animation clips everything
+  },
+  accentColorRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'flex-start',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingLeft: 56,
+  },
+  accentSwatch: {
+    width: 44,
+    height: 44,
+    borderRadius: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  accentPreview: {
+    width: 24,
+    height: 24,
+    borderRadius: 0,
+    borderWidth: 2,
+  },
 });
-
-

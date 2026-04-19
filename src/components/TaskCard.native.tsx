@@ -6,7 +6,7 @@ import Animated, {
     SlideInRight,
     useAnimatedStyle,
     useSharedValue,
-    withSpring
+    withTiming
 } from 'react-native-reanimated';
 import { useTheme } from '../context/ThemeContext';
 import { BRUTAL_STYLES } from '../lib/constants';
@@ -35,11 +35,11 @@ export function TaskCard({ task, index, onToggle, onDelete, onPress }: TaskCardP
   }));
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+    scale.value = withTiming(0.97, { duration: 100 });
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    scale.value = withTiming(1, { duration: 150 });
   };
 
   const categoryColor = task.category?.color || colors.accent;
@@ -65,24 +65,40 @@ export function TaskCard({ task, index, onToggle, onDelete, onPress }: TaskCardP
         <AnimatedCheckbox
           checked={task.is_completed}
           onToggle={() => onToggle(task.id, !task.is_completed)}
-          color={categoryColor}
+          color={colors.accent}
         />
 
         <View style={styles.content}>
-          <ThemedText
-            size="md"
-            weight="semibold"
-            style={[
-              styles.title,
+          {/* Title + priority badge */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <ThemedText
+              size="md"
+              weight="semibold"
+              style={[
+                styles.title,
+                { flex: 1, marginRight: 8 },
+                {
+                  color: task.is_completed ? colors.textTertiary : colors.textPrimary,
+                  textDecorationLine: task.is_completed ? 'line-through' : 'none',
+                },
+              ]}
+              numberOfLines={2}
+            >
+              {task.title}
+            </ThemedText>
+            <View style={[
+              styles.priorityBadge,
               {
-                color: task.is_completed ? colors.textTertiary : colors.textPrimary,
-                textDecorationLine: task.is_completed ? 'line-through' : 'none',
-              },
-            ]}
-            numberOfLines={1}
-          >
-            {task.title}
-          </ThemedText>
+                backgroundColor: task.priority === 'high' ? colors.danger : task.priority === 'medium' ? '#FF9500' : colors.accent,
+                borderWidth: 2,
+                borderColor: colors.textPrimary,
+              }
+            ]}>
+              <ThemedText size="xs" weight="black" style={{ color: task.priority === 'high' ? colors.white : colors.textPrimary }}>
+                {task.priority.toUpperCase()}
+              </ThemedText>
+            </View>
+          </View>
 
           {task.description ? (
             <ThemedText
@@ -109,13 +125,9 @@ export function TaskCard({ task, index, onToggle, onDelete, onPress }: TaskCardP
                 <Ionicons name="time-outline" size={12} color={colors.textSecondary} />
                 <ThemedText size="xs" weight="medium" colorType="textSecondary" style={styles.time}>
                   {formatTime(task.due_time)}
+                  {task.duration_minutes ? ` · ${task.duration_minutes}m` : ''}
                 </ThemedText>
               </View>
-            )}
-            {task.duration_minutes && (
-              <ThemedText size="xs" colorType="textTertiary" style={styles.duration}>
-                {task.duration_minutes} min
-              </ThemedText>
             )}
           </View>
         </View>
@@ -169,5 +181,10 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     padding: 4,
+  },
+  priorityBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 0,
   },
 });

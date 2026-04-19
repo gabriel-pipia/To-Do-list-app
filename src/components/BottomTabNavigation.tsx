@@ -4,10 +4,10 @@ import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../hooks/useTheme';
-import { BRUTAL_STYLES } from '../lib/constants';
+import { BRUTAL_STYLES, SPACING } from '../lib/constants';
 import { Button } from './ui';
 
-export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+export function BottomTabNavigation({ state, descriptors, navigation }: BottomTabBarProps) {
   const { colors, layout, spacing } = useTheme();
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom > 0 ? insets.bottom + 8 : 24;
@@ -16,7 +16,6 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     styles.container,
     {
       backgroundColor: colors.background,
-      width: '90%' as any,
       maxWidth: layout.containerMaxWidth,
       borderRadius: 0, // Blocky tab bar
       ...BRUTAL_STYLES(colors),
@@ -104,7 +103,7 @@ function TabItem({
       <Animated.View style={[styles.iconContainer]}>
         <Button
           type="icon"
-          variant={isFocused ? 'primary' : 'ghost'}
+          variant={isFocused ? 'secondary' : 'ghost'}
           size="none"
           onPress={onPress}
           icon={icon?.({
@@ -123,6 +122,7 @@ const styles = StyleSheet.create({
   tabWrapper: {
     position: 'absolute',
     width: '100%',
+    paddingHorizontal: SPACING.lg,
     alignItems: 'center',
     zIndex: 50,
   },

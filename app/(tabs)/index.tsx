@@ -3,24 +3,27 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { addDays, format, isSameDay, isToday, startOfWeek, subDays } from 'date-fns';
 import { Redirect, router } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import { DeviceEventEmitter, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { FadeIn, FadeInDown, FadeInLeft, FadeInRight, LinearTransition } from 'react-native-reanimated';
 import { Button, ThemedText, ThemedView } from '../../src/components/ui';
 import { useAuth } from '../../src/context/AuthContext';
-import { useTheme } from '../../src/context/ThemeContext';
+import { useTheme } from '../../src/hooks/useTheme';
 import { SPACING } from '../../src/lib/constants';
 import { Task } from '../../src/types';
 import { toDateString } from '../../src/utils/dateUtils';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const WEEK_LABELS = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
 const TASKS_STORAGE_KEY = '@todoit_tasks';
 
 export default function HomeScreen() {
-  const { colors } = useTheme();
+  const { colors, getContrastColor } = useTheme();
   const { user, profile, loading: authLoading } = useAuth();
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [navDirection, setNavDirection] = useState<'left' | 'right'>('right');
 
   const fetchAllTasks = useCallback(async () => {
     if (!user) return;
@@ -37,6 +40,10 @@ export default function HomeScreen() {
 
   useEffect(() => {
     fetchAllTasks();
+    const sub = DeviceEventEmitter.addListener('tasks_updated', () => {
+      fetchAllTasks();
+    });
+    return () => sub.remove();
   }, [fetchAllTasks]);
 
   const todayStr = toDateString(new Date());
@@ -52,6 +59,7 @@ export default function HomeScreen() {
   const doneWeekTasks = weekTasks.filter(t => t.is_completed).length;
 
   const navigateWeek = (direction: 'prev' | 'next') => {
+    setNavDirection(direction === 'next' ? 'right' : 'left');
     setSelectedDate(prev => direction === 'next' ? addDays(prev, 7) : subDays(prev, 7));
   };
 
@@ -70,9 +78,13 @@ export default function HomeScreen() {
           
           <Button 
             title="TODAY"
-            variant="outline"
+            variant="secondary"
             size="sm"
-            onPress={() => setSelectedDate(new Date())}
+            onPress={() => {
+              const now = new Date();
+              setNavDirection(now > selectedDate ? 'right' : 'left');
+              setSelectedDate(now);
+            }}
             style={{ borderRadius: 0 }}
           />
         </View>
@@ -81,7 +93,7 @@ export default function HomeScreen() {
       {/* Week Strip (Horizontal & Functional) */}
       <Animated.View entering={FadeIn.delay(200).duration(800)} style={styles.weekStripContainer}>
         <View style={styles.weekStripHeader}>
-          <ThemedText size="sm" weight="black" colorType="textTertiary">
+          <ThemedText size="lg" weight="black" colorType="textTertiary">
             {format(start, 'MMMM yyyy').toUpperCase()}
           </ThemedText>
           <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -102,7 +114,11 @@ export default function HomeScreen() {
           </View>
         </View>
         
-        <View style={styles.weekStripRow}>
+        <Animated.View 
+          key={start.toISOString()} 
+          entering={navDirection === 'right' ? FadeInRight.duration(400) : FadeInLeft.duration(400)} 
+          style={styles.weekStripRow}
+        >
           {weekDays.map((d, i) => {
             const isSelected = isSameDay(d, selectedDate);
             const todayCheck = isToday(d);
@@ -111,22 +127,34 @@ export default function HomeScreen() {
                 key={i}
                 variant={isSelected ? 'primary' : 'outline'}
                 size="none"
-                onPress={() => setSelectedDate(d)}
+                onPress={() => {
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const cellDate = new Date(d);
+                  cellDate.setHours(0, 0, 0, 0);
+
+                  const dayString = toDateString(d);
+                  const hasTasks = allTasks.some(t => t.due_date === dayString);
+
+                  if (cellDate < today && !hasTasks) return;
+                  setSelectedDate(d);
+                }}
                 style={[
                   styles.weekStripCell,
                   !isSelected && todayCheck && { borderStyle: 'solid' },
-                  !isSelected && !todayCheck && { borderColor: 'transparent', boxShadow: 'none', borderWidth: 0 }
+                  !isSelected && !todayCheck && { borderColor: 'transparent', boxShadow: 'none', borderWidth: 0 },
+                  (new Date(d).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) && !allTasks.some(t => t.due_date === toDateString(d))) && { opacity: 0.3 }
                 ]}
               >
                 <View style={{ alignItems: 'center' }}>
                   <ThemedText size="xs" weight="bold" style={{
-                    color: colors.textPrimary,
+                    color: isSelected ? getContrastColor(colors.accent) : colors.textPrimary,
                     marginBottom: 2,
                   }}>
                     {WEEK_LABELS[i]}
                   </ThemedText>
                   <ThemedText size="md" weight="black" style={{
-                    color: colors.textPrimary,
+                    color: isSelected ? getContrastColor(colors.accent) : colors.textPrimary,
                   }}>
                     {format(d, 'd')}
                   </ThemedText>
@@ -134,7 +162,7 @@ export default function HomeScreen() {
               </Button>
             );
           })}
-        </View>
+        </Animated.View>
       </Animated.View>
 
       {/* This Week List */}
@@ -158,8 +186,10 @@ export default function HomeScreen() {
           const isToday = dayDateStr === todayStr;
 
           return (
-            <Pressable
+            <AnimatedPressable
               key={dateStr}
+              entering={FadeInDown.delay(index * 50).duration(400)}
+              layout={LinearTransition.duration(300)}
               onPress={() => router.push({ pathname: '/(tabs)/day', params: { date: date.toISOString() } })}
               style={[
                 styles.dayRow, 
@@ -170,18 +200,17 @@ export default function HomeScreen() {
             >
               <View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <ThemedText 
-                    size={isToday ? "3xl" : "2xl"} 
-                    fontFamily="Kodchasan" 
-                    type='title'
-                    weight="black" 
+                  <Animated.Text 
                     style={{ 
+                      fontSize: isToday ? 28 : 24,
+                      fontFamily: "Kodchasan-Bold",
                       letterSpacing: 1, 
+                      fontWeight: '900',
                       color: isToday ? colors.textPrimary : (isSelectedDay ? colors.textPrimary : colors.textSecondary) 
                     }}
                   >
                     {dayName}
-                  </ThemedText>
+                  </Animated.Text>
                   {isToday && (
                     <View style={[styles.todayBadge, { backgroundColor: colors.accent, borderWidth: 3, borderColor: colors.textPrimary }]}>
                       <ThemedText size="xs" weight="black" style={{ color: colors.textPrimary }}>TODAY</ThemedText>
@@ -196,7 +225,7 @@ export default function HomeScreen() {
               <View style={styles.rightContent}>
                 <Ionicons name="chevron-forward" size={18} color={colors.textPrimary} />
               </View>
-            </Pressable>
+            </AnimatedPressable>
           );
         })}
       </ScrollView>

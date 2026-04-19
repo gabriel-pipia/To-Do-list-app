@@ -1,7 +1,8 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { v4 as uuidv4 } from 'uuid';
+import { DeviceEventEmitter } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { Category, GroupedTasks, Task, TaskWithCategory } from '../types';
 import { getTimeOfDay, toDateString } from '../utils/dateUtils';
@@ -54,6 +55,15 @@ export function useTasks(selectedDate: Date) {
     }, [fetchTasks])
   );
 
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('tasks_updated', () => {
+      fetchTasks();
+    });
+    return () => {
+      subscription.remove();
+    };
+  }, [fetchTasks]);
+
   const groupedTasks: GroupedTasks = {
     morning: tasks.filter((t) => getTimeOfDay(t.due_time) === 'morning'),
     afternoon: tasks.filter((t) => getTimeOfDay(t.due_time) === 'afternoon'),
@@ -81,6 +91,7 @@ export function useTasks(selectedDate: Date) {
       allTasks.push(newTask);
       await AsyncStorage.setItem(`${TASKS_STORAGE_KEY}_${user.id}`, JSON.stringify(allTasks));
       fetchTasks();
+      DeviceEventEmitter.emit('tasks_updated');
       return { error: null };
     } catch (e: any) {
       return { error: { message: e.message || 'Save failed' } };
@@ -101,6 +112,7 @@ export function useTasks(selectedDate: Date) {
 
       await AsyncStorage.setItem(`${TASKS_STORAGE_KEY}_${user.id}`, JSON.stringify(updated));
       fetchTasks();
+      DeviceEventEmitter.emit('tasks_updated');
     } catch (e) {
       console.error('Toggle failed', e);
     }
@@ -115,6 +127,7 @@ export function useTasks(selectedDate: Date) {
       const filtered = allTasks.filter(t => t.id !== taskId);
       await AsyncStorage.setItem(`${TASKS_STORAGE_KEY}_${user.id}`, JSON.stringify(filtered));
       fetchTasks();
+      DeviceEventEmitter.emit('tasks_updated');
     } catch (e) {
        console.error('Delete failed', e);
     }
@@ -134,6 +147,7 @@ export function useTasks(selectedDate: Date) {
 
       await AsyncStorage.setItem(`${TASKS_STORAGE_KEY}_${user.id}`, JSON.stringify(updated));
       fetchTasks();
+      DeviceEventEmitter.emit('tasks_updated');
     } catch (e) {
        console.error('Update failed', e);
     }

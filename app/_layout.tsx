@@ -1,17 +1,20 @@
+import 'react-native-get-random-values'; // Must be first — polyfills crypto for uuid
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useSegments, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
-import { AuthProvider } from '../src/context/AuthContext';
+import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
 
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutContent() {
   const { colors, mode } = useTheme();
+  const { user, loading: authLoading } = useAuth();
+  const segments = useSegments();
 
   const [fontsLoaded, fontError] = useFonts({
     'GoogleSans-Regular': require('../assets/fonts/Google_Sans/GoogleSans-Regular.ttf'),
@@ -29,6 +32,19 @@ function RootLayoutContent() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);
+
+  useEffect(() => {
+    if (authLoading || (!fontsLoaded && !fontError)) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+
+    // If starting up or deep linking without a user, force login
+    if (!user && !inAuthGroup) {
+      setTimeout(() => router.replace('/(auth)/login'), 0);
+    } else if (user && inAuthGroup) {
+      setTimeout(() => router.replace('/(tabs)'), 0);
+    }
+  }, [user, authLoading, segments, fontsLoaded, fontError]);
 
   if (!fontsLoaded && !fontError) {
     return null;

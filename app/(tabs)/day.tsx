@@ -152,7 +152,9 @@ export default function DayScreen() {
         )}
       </ScrollView>
 
-      <FloatingActionButton onPress={() => { setEditingTask(null); setShowAddModal(true); }} />
+      {!(parsedDate.setHours(0,0,0,0) < new Date().setHours(0,0,0,0)) && (
+        <FloatingActionButton onPress={() => { setEditingTask(null); setShowAddModal(true); }} />
+      )}
 
       <AddTaskModal
         visible={showAddModal}

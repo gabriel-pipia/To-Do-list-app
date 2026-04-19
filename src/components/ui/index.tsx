@@ -7,5 +7,6 @@ export * from './RefreshControl';
 export * from './SheetHeader';
 export * from './Text';
 export * from './Toast';
+export * from './Switch';
 export * from './View';
 
